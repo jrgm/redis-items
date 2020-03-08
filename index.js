@@ -24,7 +24,8 @@ async function getKeyValues(key) {
   const type = await redis.type(key)
   if (type === 'string') {
     const value = await redis.get(key)
-    stringKeys.push([ key, type, value ])
+    const ttl = await redis.ttl(key)
+    stringKeys.push([ key, type, value, ttl ])
   } else if (type === 'set') {
     const members = await redis.smembers(key)
     setKeys.push([ key, type, members ])
@@ -39,8 +40,8 @@ function dump() {
   }
 
   stringKeys.forEach(elt => {
-    const [ key, type, value ] = elt
-    printf(process.stdout, '%-16s -> %-8s -> %s\n', key, type, value)
+    const [ key, type, value, ttl ] = elt
+    printf(process.stdout, '%-16s -> %-8s -> %8s -> %s\n', key, type, ttl, value)
   })
 
   setKeys.forEach(elt => {
@@ -62,13 +63,16 @@ function analyze() {
     setKeysHash[key] = members
   })
 
+  let totalTTL = 0
   stringKeys.forEach(elt => {
-    const [ key, type, value ] = elt
+    const [ key, type, value, ttl ] = elt
     if (stringKeysHash[key]) {
       throw new Error('Huh? string ' + key)
     }
+    totalTTL += ttl
     stringKeysHash[key] = value
   })
+  printf(process.stdout, 'average ttl: %d\n', totalTTL / stringKeys.length)
 
   if (process.env.DUMP) {
     console.log(JSON.stringify(setKeysHash, null, 2))
