@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "ioredis": "4.16.0",
-    "printf": "0.5.2"
+    "printf": "0.6.1"
   },
   "devDependencies": {
     "eslint": "6.8.0"
